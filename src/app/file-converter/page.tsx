@@ -17,6 +17,9 @@ export default function FileConverter() {
     setOutputUrl(URL.createObjectURL(blob));
   };
   return (
+    <section className="max-w-xl mx-auto space-y-6">
+      <h1 className="text-2xl font-semibold">File Converter (Image to PNG)</h1>
+      <form onSubmit={handleSubmit} className="space-y-4 p-6 bg-white/70 dark:bg-zinc-800/70 rounded-lg shadow">
     <div className="p-8 space-y-4">
       <h1 className="text-xl font-bold">File Converter (Image to PNG)</h1>
       <form onSubmit={handleSubmit} className="space-y-2">
@@ -24,6 +27,11 @@ export default function FileConverter() {
           type="file"
           accept="image/*"
           onChange={(e) => setFile(e.target.files?.[0] || null)}
+          className="block w-full"
+        />
+        <button
+          type="submit"
+          className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
         />
         <button
           type="submit"
@@ -34,6 +42,11 @@ export default function FileConverter() {
         </button>
       </form>
       {outputUrl && (
+        <div className="p-4 bg-white/70 dark:bg-zinc-800/70 rounded-lg shadow">
+          <h2 className="font-semibold mb-2">Result</h2>
+          <a href={outputUrl} download="converted.png" className="underline text-blue-600">
+            Download converted file
+          </a>
         <div>
           <h2 className="font-semibold">Result</h2>
           <a href={outputUrl} download="converted.png" className="underline text-blue-600">Download converted file</a>
@@ -42,6 +55,7 @@ export default function FileConverter() {
           </div>
         </div>
       )}
+    </section>
     </div>
   );
 }

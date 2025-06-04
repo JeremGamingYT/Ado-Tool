@@ -1,6 +1,5 @@
 # Ado Tool
-
-Ado Tool is a collection of small utilities built with Next.js. The project includes:
+Ado Tool is a collection of small utilities built with Next.js. It features a modern design built with Tailwind CSS and includes:
 
 - **File Converter** – convert uploaded images to PNG directly in the browser.
 - **Zip Compressor** – create a zip archive from multiple uploaded files.
