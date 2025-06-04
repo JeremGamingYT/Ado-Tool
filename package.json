@@ -11,8 +11,10 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "adm-zip": "^0.5.16",
+    "framer-motion": "^12.16.0",
+    "lucide-react": "^0.512.0",
     "next": "15.3.3",
-    "react": "^19.0.0",
+    "react": "^19.1.0",
     "react-dom": "^19.0.0",
     "sharp": "^0.34.2"
   },

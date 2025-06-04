@@ -4,14 +4,17 @@ import type React from "react"
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Upload, Download, CheckCircle, AlertCircle, ArrowRightLeft, ImageIcon } from "lucide-react"
+import { Upload, Download, CheckCircle, AlertCircle, ImageIcon, Sliders, Info } from "lucide-react"
 
-export default function FileConverter() {
+export default function ImageCompressor() {
   const [file, setFile] = useState<File | null>(null)
   const [outputUrl, setOutputUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
+  const [quality, setQuality] = useState(80)
+  const [originalSize, setOriginalSize] = useState<number>(0)
+  const [compressedSize, setCompressedSize] = useState<number>(0)
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -31,6 +34,7 @@ export default function FileConverter() {
       const droppedFile = e.dataTransfer.files[0]
       if (droppedFile.type.startsWith("image/")) {
         setFile(droppedFile)
+        setOriginalSize(droppedFile.size)
         setError(null)
       } else {
         setError("Please select an image file")
@@ -40,7 +44,9 @@ export default function FileConverter() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0])
+      const selectedFile = e.target.files[0]
+      setFile(selectedFile)
+      setOriginalSize(selectedFile.size)
       setError(null)
     }
   }
@@ -52,26 +58,58 @@ export default function FileConverter() {
     try {
       setLoading(true)
       setError(null)
-      const formData = new FormData()
-      formData.append("file", file)
 
-      const res = await fetch("/api/convert-image", {
-        method: "POST",
-        body: formData,
-      })
+      // Create canvas for compression
+      const canvas = document.createElement("canvas")
+      const ctx = canvas.getContext("2d")
+      const img = new Image()
 
-      if (!res.ok) {
-        throw new Error(`Error: ${res.status} ${res.statusText}`)
+      img.onload = () => {
+        // Set canvas dimensions
+        canvas.width = img.width
+        canvas.height = img.height
+
+        // Draw image on canvas
+        ctx?.drawImage(img, 0, 0)
+
+        // Convert to blob with specified quality
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              setCompressedSize(blob.size)
+              setOutputUrl(URL.createObjectURL(blob))
+            }
+            setLoading(false)
+          },
+          "image/jpeg",
+          quality / 100,
+        )
       }
 
-      const blob = await res.blob()
-      setOutputUrl(URL.createObjectURL(blob))
+      img.onerror = () => {
+        setError("Failed to load image")
+        setLoading(false)
+      }
+
+      img.src = URL.createObjectURL(file)
     } catch (err) {
-      console.error("Conversion error:", err)
-      setError(err instanceof Error ? err.message : "Failed to convert image")
-    } finally {
+      console.error("Compression error:", err)
+      setError(err instanceof Error ? err.message : "Failed to compress image")
       setLoading(false)
     }
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + " B"
+    else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + " KB"
+    else return (bytes / 1048576).toFixed(2) + " MB"
+  }
+
+  const getCompressionRatio = () => {
+    if (originalSize && compressedSize) {
+      return ((1 - compressedSize / originalSize) * 100).toFixed(1)
+    }
+    return "0"
   }
 
   return (
@@ -88,15 +126,15 @@ export default function FileConverter() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="inline-flex items-center space-x-3 mb-6"
         >
-          <div className="p-3 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-2xl shadow-lg">
-            <ArrowRightLeft className="w-8 h-8 text-white" />
+          <div className="p-3 bg-gradient-to-br from-violet-500 to-purple-500 rounded-2xl shadow-lg">
+            <ImageIcon className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
-            File Converter
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+            Image Compressor
           </h1>
         </motion.div>
         <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-          Convert your images to PNG format with our easy-to-use tool. Fast, secure, and completely free.
+          Reduce image file sizes while maintaining excellent quality. Perfect for web optimization and storage.
         </p>
       </motion.div>
 
@@ -109,7 +147,7 @@ export default function FileConverter() {
           className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200/50 dark:border-slate-700/50"
         >
           <div className="p-8">
-            <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-200">Upload Image</h2>
+            <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-200">Upload & Compress</h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <motion.div
@@ -117,8 +155,8 @@ export default function FileConverter() {
                 transition={{ duration: 0.2 }}
                 className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 ${
                   dragActive
-                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 scale-105"
-                    : "border-slate-300 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-500"
+                    ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20 scale-105"
+                    : "border-slate-300 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-500"
                 } ${error ? "border-red-300 dark:border-red-700" : ""}`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
@@ -128,20 +166,20 @@ export default function FileConverter() {
                 <motion.div animate={{ y: dragActive ? -5 : 0 }} transition={{ duration: 0.2 }}>
                   <Upload className="h-12 w-12 mx-auto text-slate-400 dark:text-slate-500 mb-4" />
                   <p className="mb-2 text-lg font-medium text-slate-700 dark:text-slate-300">
-                    <span className="text-emerald-600 dark:text-emerald-400">Click to upload</span> or drag and drop
+                    <span className="text-violet-600 dark:text-violet-400">Click to upload</span> or drag and drop
                   </p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">PNG, JPG, GIF, WEBP (MAX. 10MB)</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">PNG, JPG, WEBP (MAX. 10MB)</p>
                 </motion.div>
 
-                <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" id="file-upload" />
+                <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" id="image-upload" />
                 <motion.label
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  htmlFor="file-upload"
-                  className="mt-6 inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white rounded-xl font-medium shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/20 cursor-pointer transition-all duration-300"
+                  htmlFor="image-upload"
+                  className="mt-6 inline-flex items-center px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-500 text-white rounded-xl font-medium shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-violet-500/20 cursor-pointer transition-all duration-300"
                 >
                   <Upload className="w-5 h-5 mr-2" />
-                  Select File
+                  Select Image
                 </motion.label>
               </motion.div>
 
@@ -151,14 +189,42 @@ export default function FileConverter() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="flex items-center space-x-3 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800"
+                    className="space-y-4"
                   >
-                    <CheckCircle className="h-6 w-6 text-emerald-500 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200 truncate">{file.name}</p>
-                      <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                        {(file.size / 1024).toFixed(2)} KB
-                      </p>
+                    <div className="flex items-center space-x-3 p-4 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-200 dark:border-violet-800">
+                      <CheckCircle className="h-6 w-6 text-violet-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-violet-800 dark:text-violet-200 truncate">{file.name}</p>
+                        <p className="text-xs text-violet-600 dark:text-violet-400">
+                          Original size: {formatFileSize(originalSize)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Quality Slider */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center space-x-2">
+                          <Sliders className="w-4 h-4" />
+                          <span>Quality</span>
+                        </label>
+                        <span className="text-sm font-semibold text-violet-600 dark:text-violet-400">{quality}%</span>
+                      </div>
+                      <motion.input
+                        whileFocus={{ scale: 1.01 }}
+                        type="range"
+                        min="10"
+                        max="100"
+                        value={quality}
+                        onChange={(e) => setQuality(Number(e.target.value))}
+                        className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                      />
+                      <div className="flex items-start space-x-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                          Lower quality = smaller file size. Higher quality = better image but larger file.
+                        </p>
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -183,7 +249,7 @@ export default function FileConverter() {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={!file || loading}
-                className="w-full px-6 py-4 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                className="w-full px-6 py-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
               >
                 {loading ? (
                   <div className="flex items-center justify-center space-x-2">
@@ -192,12 +258,12 @@ export default function FileConverter() {
                       transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
                       className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
                     />
-                    <span>Converting...</span>
+                    <span>Compressing...</span>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center space-x-2">
-                    <ArrowRightLeft className="w-5 h-5" />
-                    <span>Convert to PNG</span>
+                    <ImageIcon className="w-5 h-5" />
+                    <span>Compress Image</span>
                   </div>
                 )}
               </motion.button>
@@ -224,22 +290,42 @@ export default function FileConverter() {
                   exit={{ opacity: 0, scale: 0.95 }}
                   className="space-y-6"
                 >
+                  {/* Compression Stats */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-800">
+                      <p className="text-xs font-medium text-green-600 dark:text-green-400 uppercase tracking-wide">
+                        Size Reduction
+                      </p>
+                      <p className="text-2xl font-bold text-green-700 dark:text-green-300">{getCompressionRatio()}%</p>
+                    </div>
+                    <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                      <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
+                        New Size
+                      </p>
+                      <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                        {formatFileSize(compressedSize)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Preview */}
                   <div className="border-2 border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900 p-4">
                     <img
                       src={outputUrl || "/placeholder.svg"}
-                      alt="Converted"
+                      alt="Compressed"
                       className="max-w-full h-auto mx-auto rounded-xl shadow-lg"
                     />
                   </div>
+
                   <motion.a
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     href={outputUrl}
-                    download="converted.png"
+                    download="compressed-image.jpg"
                     className="flex items-center justify-center w-full px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-green-500/20 transition-all duration-300"
                   >
                     <Download className="h-5 w-5 mr-2" />
-                    Download PNG
+                    Download Compressed Image
                   </motion.a>
                 </motion.div>
               ) : (
@@ -251,7 +337,7 @@ export default function FileConverter() {
                   className="h-80 flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl"
                 >
                   <ImageIcon className="h-16 w-16 mb-4" />
-                  <p className="text-lg font-medium">Converted image will appear here</p>
+                  <p className="text-lg font-medium">Compressed image will appear here</p>
                   <p className="text-sm">Upload an image to get started</p>
                 </motion.div>
               )}
