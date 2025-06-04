@@ -20,6 +20,9 @@ export default function FileConverter() {
     <section className="max-w-xl mx-auto space-y-6">
       <h1 className="text-2xl font-semibold">File Converter (Image to PNG)</h1>
       <form onSubmit={handleSubmit} className="space-y-4 p-6 bg-white/70 dark:bg-zinc-800/70 rounded-lg shadow">
+    <div className="p-8 space-y-4">
+      <h1 className="text-xl font-bold">File Converter (Image to PNG)</h1>
+      <form onSubmit={handleSubmit} className="space-y-2">
         <input
           type="file"
           accept="image/*"
@@ -29,6 +32,10 @@ export default function FileConverter() {
         <button
           type="submit"
           className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+        />
+        <button
+          type="submit"
+          className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
           disabled={!file}
         >
           Convert
@@ -40,11 +47,15 @@ export default function FileConverter() {
           <a href={outputUrl} download="converted.png" className="underline text-blue-600">
             Download converted file
           </a>
+        <div>
+          <h2 className="font-semibold">Result</h2>
+          <a href={outputUrl} download="converted.png" className="underline text-blue-600">Download converted file</a>
           <div className="mt-2">
             <img src={outputUrl} alt="Converted" className="max-w-xs" />
           </div>
         </div>
       )}
     </section>
+    </div>
   );
 }

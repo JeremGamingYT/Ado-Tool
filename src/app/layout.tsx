@@ -21,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </header>
         <main className="container mx-auto flex-1 px-4 pb-10">{children}</main>
       </body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

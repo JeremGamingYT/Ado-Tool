@@ -22,6 +22,9 @@ export default function ZipCompressor() {
     <section className="max-w-xl mx-auto space-y-6">
       <h1 className="text-2xl font-semibold">Zip Compressor</h1>
       <form onSubmit={handleSubmit} className="space-y-4 p-6 bg-white/70 dark:bg-zinc-800/70 rounded-lg shadow">
+    <div className="p-8 space-y-4">
+      <h1 className="text-xl font-bold">Zip Compressor</h1>
+      <form onSubmit={handleSubmit} className="space-y-2">
         <input
           type="file"
           multiple
@@ -31,6 +34,10 @@ export default function ZipCompressor() {
         <button
           type="submit"
           className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+        />
+        <button
+          type="submit"
+          className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
           disabled={!files || files.length === 0}
         >
           Compress
@@ -42,5 +49,10 @@ export default function ZipCompressor() {
         </a>
       )}
     </section>
+        <a href={downloadUrl} download="archive.zip" className="text-blue-600 underline">
+          Download zip
+        </a>
+      )}
+    </div>
   );
 }
